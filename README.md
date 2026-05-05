@@ -81,27 +81,19 @@ Swagger UI er tilgængeligt på http://localhost:5000/swagger
 
 ---
 
-## Arduino konfiguration
-
-Åbn `arduino_mqtt/rfid_scanner_mqtt.ino` og tilpas disse linjer øverst i filen:
-
-```cpp
-const char* WIFI_SSID     = "DIT_WIFI_NAVN";
-const char* WIFI_PASSWORD = "DIT_WIFI_KODEORD";
-const char* MQTT_BROKER   = "192.168.1.100"; // IP på din PC - find den med ipconfig
-const char* LAMP_ID       = "lampe-01";      // Unikt ID per M5Stack enhed
-```
-
-Find din PC's IP-adresse ved at køre `ipconfig` i en terminal og kigge efter IPv4-adressen. M5Stack og din PC skal være på det samme WiFi-netværk.
-
-Har du flere M5Stack enheder skal hver have sit eget unikke `LAMP_ID`, fx `lampe-01`, `lampe-02` osv.
-
-### Nødvendige Arduino biblioteker
-
+Arduino konfiguration
+Åbn Arduino.txt og tilpas disse linjer øverst i filen:
+cppconst char* WIFI_SSID     = "wifi navn";
+const char* WIFI_PASSWORD = "wifi kode";
+const char* MQTT_BROKER   = "192.168.."; // IP på din PC - find den med ipconfig
+const char* LAMP_ID       = "lampe-01";  // Unikt ID per M5Stack enhed
+Find din PC's IP-adresse ved at køre ipconfig i en terminal og kigge efter IPv4-adressen. M5Stack og din PC skal være på det samme WiFi-netværk.
+Har du flere M5Stack enheder skal hver have sit eget unikke LAMP_ID, fx lampe-01, lampe-02 osv.
+Nødvendige Arduino biblioteker
 Installer disse via Library Manager i Arduino IDE:
 
-- PubSubClient af knolleary
-- ArduinoJson af Benoit Blanchon
+PubSubClient af knolleary
+ArduinoJson af Benoit Blanchon
 
 ---
 
