@@ -13,7 +13,7 @@ using System.Reflection;
 [assembly: System.Reflection.AssemblyCompanyAttribute("HendrixRFID")]
 [assembly: System.Reflection.AssemblyConfigurationAttribute("Debug")]
 [assembly: System.Reflection.AssemblyFileVersionAttribute("1.0.0.0")]
-[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+13590129f431fa59ffa73d1584a89efb1f017baa")]
+[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+4f69ce688ff90f2df6ec985777f82ef1530aec93")]
 [assembly: System.Reflection.AssemblyProductAttribute("HendrixRFID")]
 [assembly: System.Reflection.AssemblyTitleAttribute("HendrixRFID")]
 [assembly: System.Reflection.AssemblyVersionAttribute("1.0.0.0")]
