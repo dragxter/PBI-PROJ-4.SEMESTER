@@ -22,7 +22,12 @@ namespace HendrixRFID.Migrations
                     b.Property<string>("LampId")
                         .HasColumnType("TEXT");
 
+                    b.Property<int>("PlacedIn")
+                        .HasColumnType("INTEGER");
+
                     b.HasKey("LampId");
+
+                    b.HasIndex("PlacedIn");
 
                     b.ToTable("Lamps");
                 });
@@ -32,9 +37,63 @@ namespace HendrixRFID.Migrations
                     b.Property<string>("PigId")
                         .HasColumnType("TEXT");
 
+                    b.Property<int>("BelongsTo")
+                        .HasColumnType("INTEGER");
+
                     b.HasKey("PigId");
 
+                    b.HasIndex("BelongsTo");
+
                     b.ToTable("Pigs");
+                });
+
+            modelBuilder.Entity("HendrixRFID.Models.PigHistory", b =>
+                {
+                    b.Property<int>("HistoryId")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("INTEGER");
+
+                    b.Property<string>("FromLampId")
+                        .IsRequired()
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("LampId")
+                        .IsRequired()
+                        .HasColumnType("TEXT");
+
+                    b.Property<DateTime>("MovedAt")
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("PigId")
+                        .IsRequired()
+                        .HasColumnType("TEXT");
+
+                    b.HasKey("HistoryId");
+
+                    b.HasIndex("LampId");
+
+                    b.HasIndex("PigId");
+
+                    b.ToTable("PigHistories");
+                });
+
+            modelBuilder.Entity("HendrixRFID.Models.PigLocation", b =>
+                {
+                    b.Property<string>("PigId")
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("CurrentLampId")
+                        .IsRequired()
+                        .HasColumnType("TEXT");
+
+                    b.Property<DateTime>("LastUpdated")
+                        .HasColumnType("TEXT");
+
+                    b.HasKey("PigId");
+
+                    b.HasIndex("CurrentLampId");
+
+                    b.ToTable("PigLocations");
                 });
 
             modelBuilder.Entity("HendrixRFID.Models.RawScan", b =>
@@ -59,7 +118,101 @@ namespace HendrixRFID.Migrations
 
                     b.HasKey("ScanId");
 
+                    b.HasIndex("LampId");
+
+                    b.HasIndex("PigId");
+
                     b.ToTable("RawScans");
+                });
+
+            modelBuilder.Entity("HendrixRFID.Models.Stable", b =>
+                {
+                    b.Property<int>("StableId")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("INTEGER");
+
+                    b.HasKey("StableId");
+
+                    b.ToTable("Stables");
+                });
+
+            modelBuilder.Entity("HendrixRFID.Models.Lamp", b =>
+                {
+                    b.HasOne("HendrixRFID.Models.Stable", "Stable")
+                        .WithMany()
+                        .HasForeignKey("PlacedIn")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Stable");
+                });
+
+            modelBuilder.Entity("HendrixRFID.Models.Pig", b =>
+                {
+                    b.HasOne("HendrixRFID.Models.Stable", "Stable")
+                        .WithMany()
+                        .HasForeignKey("BelongsTo")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Stable");
+                });
+
+            modelBuilder.Entity("HendrixRFID.Models.PigHistory", b =>
+                {
+                    b.HasOne("HendrixRFID.Models.Lamp", "Lamp")
+                        .WithMany()
+                        .HasForeignKey("LampId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("HendrixRFID.Models.Pig", "Pig")
+                        .WithMany()
+                        .HasForeignKey("PigId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Lamp");
+
+                    b.Navigation("Pig");
+                });
+
+            modelBuilder.Entity("HendrixRFID.Models.PigLocation", b =>
+                {
+                    b.HasOne("HendrixRFID.Models.Lamp", "Lamp")
+                        .WithMany()
+                        .HasForeignKey("CurrentLampId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("HendrixRFID.Models.Pig", "Pig")
+                        .WithOne()
+                        .HasForeignKey("HendrixRFID.Models.PigLocation", "PigId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Lamp");
+
+                    b.Navigation("Pig");
+                });
+
+            modelBuilder.Entity("HendrixRFID.Models.RawScan", b =>
+                {
+                    b.HasOne("HendrixRFID.Models.Lamp", "Lamp")
+                        .WithMany()
+                        .HasForeignKey("LampId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("HendrixRFID.Models.Pig", "Pig")
+                        .WithMany()
+                        .HasForeignKey("PigId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Lamp");
+
+                    b.Navigation("Pig");
                 });
 #pragma warning restore 612, 618
         }

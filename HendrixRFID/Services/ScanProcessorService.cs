@@ -1,9 +1,5 @@
-
 using System.Threading.Channels;
-using Microsoft.EntityFrameworkCore;
-using HendrixRFID.Data;
 using HendrixRFID.DTOs;
-using HendrixRFID.Models;
 
 namespace HendrixRFID.Services;
 
@@ -25,21 +21,23 @@ public class ScanProcessorService : BackgroundService
         await foreach (var message in _channelReader.ReadAllAsync(stoppingToken))
         {
             using var scope = _scopeFactory.CreateScope();
-            var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
+            var decoder  = scope.ServiceProvider.GetRequiredService<EartagDecoder>();
+            var pigLocationService = scope.ServiceProvider.GetRequiredService<PigLocationService>();
 
             foreach (var tag in message.Tags)
             {
-                db.RawScans.Add(new RawScan
+                // Dekod EpcHex => PigId
+                var pigId = decoder.Decode(tag.EpcHex);
+                if (pigId is null)
                 {
-                    PigId = tag.EpcHex,
-                    LampId = message.LampId,
-                    SignalStrength = tag.SignalStrength,
-                    ScanTime = DateTime.UtcNow
-                });
+                    _logger.LogWarning("Kunne ikke dekode EPC: {EpcHex}", tag.EpcHex);
+                    continue;
+                }
+
+                await pigLocationService.ProcessScanAsync(pigId, message.LampId, tag.SignalStrength);
             }
 
-            await db.SaveChangesAsync(stoppingToken);
-            _logger.LogInformation("Gemt {Count} scanninger fra {LampId}", message.Tags.Count, message.LampId);
+            _logger.LogInformation("Behandlet {Count} tags fra {LampId}", message.Tags.Count, message.LampId);
         }
     }
 }
