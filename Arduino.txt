@@ -1,0 +1,190 @@
+#include <M5Unified.h>
+#include "UNIT_UHF_RFID.h"
+#include <WiFi.h>
+#include <PubSubClient.h>
+#include <ArduinoJson.h>
+
+Unit_UHF_RFID uhf;
+
+// --- KONFIGURATION ---
+const char* WIFI_SSID     = "wifi navn";
+const char* WIFI_PASSWORD = "wifi kode";
+const char* MQTT_BROKER   = "192.168.1.100"; // ← ret til din PC's IP
+const char* LAMP_ID       = "lampe-01";      // ← ret per lampe
+
+WiFiClient wifiClient;
+PubSubClient mqtt(wifiClient);
+
+// --- KALIBRERING TIL STALDEN ---
+int maxTxPower = 200;
+int minRssiThreshold = 0;
+
+// --- DECODING HJÆLPE-TABEL ---
+const char* hexToBinMap[16] = {
+  "0000", "0001", "0010", "0011",
+  "0100", "0101", "0110", "0111",
+  "1000", "1001", "1010", "1011",
+  "1100", "1101", "1110", "1111"
+};
+
+String hexToBinaryString(String hexStr) {
+  String binStr = "";
+  for (int i = 0; i < hexStr.length(); i++) {
+    char c = hexStr.charAt(i);
+    int val = 0;
+    if (c >= '0' && c <= '9') val = c - '0';
+    else if (c >= 'A' && c <= 'F') val = c - 'A' + 10;
+    else if (c >= 'a' && c <= 'f') val = c - 'a' + 10;
+    binStr += hexToBinMap[val];
+  }
+  return binStr;
+}
+
+String decodeHendrixEartag(String epcHex) {
+  if (epcHex.length() < 24) return "Ukendt Format";
+
+  String binStr = hexToBinaryString(epcHex);
+
+  String itemRefBin   = binStr.substring(38, 58);
+  String serialNumBin = binStr.substring(58, 96);
+
+  uint32_t itemRef   = strtoul(itemRefBin.c_str(), NULL, 2);
+  uint64_t serialNum = strtoull(serialNumBin.c_str(), NULL, 2);
+
+  int breedInt     = itemRef / 100;
+  int majorCounter = itemRef % 100;
+
+  uint32_t farmNumber   = serialNum / 100000;
+  uint32_t minorCounter = serialNum % 100000;
+
+  char breedLetter = '?';
+  switch (breedInt) {
+    case 1:  breedLetter = 'X'; break;
+    case 2:  breedLetter = 'Y'; break;
+    case 3:  breedLetter = 'Z'; break;
+    case 4:  breedLetter = 'D'; break;
+    case 5:  breedLetter = 'L'; break;
+    case 6:  breedLetter = 'P'; break;
+    case 7:  breedLetter = 'G'; break;
+    case 8:  breedLetter = 'S'; break;
+    case 9:  breedLetter = 'A'; break;
+    case 10: breedLetter = 'K'; break;
+    case 11: breedLetter = 'W'; break;
+    case 12: breedLetter = 'R'; break;
+    case 13: breedLetter = 'H'; break;
+    case 14: breedLetter = 'F'; break;
+    case 15: breedLetter = 'N'; break;
+  }
+
+  char decodedStr[50];
+  snprintf(decodedStr, sizeof(decodedStr), "%c-%03lu-%02d-%05lu",
+    breedLetter,
+    (unsigned long)farmNumber,
+    majorCounter,
+    (unsigned long)minorCounter
+  );
+
+  return String(decodedStr);
+}
+
+void connectWifi() {
+  WiFi.begin(WIFI_SSID, WIFI_PASSWORD);
+  while (WiFi.status() != WL_CONNECTED) {
+    delay(500);
+    M5.Display.print(".");
+  }
+  M5.Display.println("\nWiFi OK!");
+}
+
+void connectMqtt() {
+  mqtt.setServer(MQTT_BROKER, 1883);
+  M5.Display.println("Forbinder MQTT...");
+
+  // ← Unikt client ID per lampe så de ikke sparker hinanden af
+  String clientId = "m5stack-" + String(LAMP_ID);
+
+  while (!mqtt.connected()) {
+    mqtt.connect(clientId.c_str());
+    delay(1000);
+  }
+  M5.Display.println("MQTT OK!");
+}
+
+void setup() {
+  auto cfg = M5.config();
+  M5.begin(cfg);
+
+  M5.Display.clear();
+  M5.Display.setTextSize(2);
+  M5.Display.setTextColor(0xFFFF, 0x0000);
+  M5.Display.setCursor(0, 10);
+  M5.Display.println(" HENDRIX GENETICS PoC");
+  M5.Display.println(" LOKATIONS-SCANNER");
+  M5.Display.println("--------------------");
+
+  connectWifi();
+  connectMqtt();
+
+  uhf.begin(&Serial2, 115200, 22, 21);
+  uhf.setTxPower(maxTxPower);
+}
+
+void loop() {
+  M5.update();
+  mqtt.loop();
+
+  // Genopret forbindelse hvis den er droppet
+  if (!mqtt.connected()) connectMqtt();
+
+  // ← Topic bygges dynamisk fra LAMP_ID
+  String topic = "hendrix/scans/" + String(LAMP_ID);
+
+  int tagCount = uhf.pollingMultiple(100);
+
+  M5.Display.fillRect(0, 80, 320, 160, 0x0000);
+  M5.Display.setCursor(0, 80);
+
+  // Byg JSON pakke
+  StaticJsonDocument<512> doc;
+  doc["lampId"] = LAMP_ID;
+  JsonArray tags = doc.createNestedArray("tags");
+
+  int pigsUnderLamp = 0;
+
+  if (tagCount > 0) {
+    for (int i = 0; i < tagCount; i++) {
+      String epcHex = uhf.cards[i].epc_str;
+      int rssi = uhf.cards[i].rssi;
+
+      if (rssi >= minRssiThreshold) {
+        String decodedId = decodeHendrixEartag(epcHex);
+
+        M5.Display.printf("ID : %s\n", decodedId.c_str());
+        M5.Display.printf("Sig: %d\n\n", rssi);
+        pigsUnderLamp++;
+
+        JsonObject tag = tags.createNestedObject();
+        tag["epcHex"] = epcHex;
+        tag["signalStrength"] = rssi;
+      }
+    }
+  }
+
+  // Send altid en pakke — også når ingen grise ses (heartbeat)
+  // ← Backend kan nu se forskel på "offline" og "ingen grise"
+  char payload[512];
+  serializeJson(doc, payload);
+  mqtt.publish(topic.c_str(), payload);
+
+  if (pigsUnderLamp == 0) {
+    M5.Display.println("Ingen grise under lampen...");
+    M5.Display.fillCircle(300, 20, 8, 0xF800);
+  } else {
+    static bool toggle = false;
+    toggle = !toggle;
+    uint16_t color = toggle ? 0x07E0 : 0x01E0;
+    M5.Display.fillCircle(300, 20, 8, color);
+  }
+
+  delay(250);
+}
