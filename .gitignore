@@ -1,0 +1,20 @@
+bin/
+obj/
+*.db
+Migrations/
+
+# Node.js / Frontend (Dashboard)
+node_modules/
+dist/
+dist-ssr/
+.env
+.env.*
+.env.local
+.env.*.local
+*.local
+npm-debug.log*
+
+# Editor directories and files
+.vscode/
+.idea/
+.DS_Store
