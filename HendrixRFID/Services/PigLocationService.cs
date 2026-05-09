@@ -27,7 +27,7 @@ public class PigLocationService
         }
 
         // 2. Find eller opret gris
-        var pig = await _pigService.GetOrCreateAsync(pigId, lamp.PlacedIn);
+        await _pigService.GetOrCreateAsync(pigId, lamp.PlacedIn);
 
         // 3. Gem RawScan — altid
         _db.RawScans.Add(new RawScan
@@ -38,11 +38,10 @@ public class PigLocationService
             ScanTime       = DateTime.UtcNow
         });
 
-        // 4. Opdater PigLocation
+        // 4. Opret PigLocation kun hvis grisen er ny
         var location = await _db.PigLocations.FindAsync(pigId);
         if (location is null)
         {
-            // Første gang grisen ses
             _db.PigLocations.Add(new PigLocation
             {
                 PigId         = pigId,
@@ -51,22 +50,6 @@ public class PigLocationService
             });
 
             _logger.LogInformation("Første scanning af {PigId} ved {LampId}", pigId, lampId);
-        }
-        else if (location.CurrentLampId != lampId)
-        {
-            // Grisen er skiftet til en ny lampe — skriv historik
-            _db.PigHistories.Add(new PigHistory
-            {
-                PigId   = pigId,
-                FromLampId = location.CurrentLampId,
-                LampId  = lampId,
-                MovedAt = DateTime.UtcNow
-            });
-
-            location.CurrentLampId = lampId;
-            location.LastUpdated   = DateTime.UtcNow;
-
-            _logger.LogInformation("Gris {PigId} skiftet fra {FromLampId} til {LampId}", pigId, location.CurrentLampId, lampId);
         }
 
         await _db.SaveChangesAsync();
