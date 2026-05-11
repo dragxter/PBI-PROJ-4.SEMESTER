@@ -23,14 +23,15 @@ public class LocationDecisionService
     {
         var cutoff = DateTime.UtcNow.AddHours(-24);
 
-        // Hent alt vi skal bruge
-        var allScans     = await _db.RawScans.Where(r => r.ScanTime >= cutoff).ToListAsync();
+        // Hent kun lokationer (dette er lille i hukommelsen)
         var allLocations = await _db.PigLocations.ToListAsync();
 
         foreach (var location in allLocations)
         {
-            // Find scanninger for denne gris
-            var pigScans = allScans.Where(r => r.PigId == location.PigId).ToList();
+            // Find scanninger for KUN denne gris
+            var pigScans = await _db.RawScans
+                .Where(r => r.ScanTime >= cutoff && r.PigId == location.PigId)
+                .ToListAsync();
 
             if (!pigScans.Any())
                 continue;
