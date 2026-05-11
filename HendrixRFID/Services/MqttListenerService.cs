@@ -39,9 +39,41 @@ public class MqttListenerService : BackgroundService
                 await _channelWriter.WriteAsync(message, stoppingToken);
         };
 
-        await mqttClient.ConnectAsync(options, stoppingToken);
-        await mqttClient.SubscribeAsync("hendrix/scans/#", cancellationToken: stoppingToken);
-        _logger.LogInformation("MQTT lytter på hendrix/scans/#");
+        // Håndter mistet forbindelse
+        mqttClient.DisconnectedAsync += async e =>
+        {
+            _logger.LogWarning("MQTT afbrudt. Genopretter...");
+            while (!stoppingToken.IsCancellationRequested && !mqttClient.IsConnected)
+            {
+                try
+                {
+                    await Task.Delay(TimeSpan.FromSeconds(5), stoppingToken);
+                    await mqttClient.ConnectAsync(options, stoppingToken);
+                    await mqttClient.SubscribeAsync("hendrix/scans/#", cancellationToken: stoppingToken);
+                    _logger.LogInformation("MQTT genoprettet succesfuldt.");
+                }
+                catch
+                {
+                    _logger.LogWarning("MQTT genoprettelse fejlede. Prøver igen om 5 sekunder...");
+                }
+            }
+        };
+
+        // Første forbindelse
+        while (!stoppingToken.IsCancellationRequested && !mqttClient.IsConnected)
+        {
+            try
+            {
+                await mqttClient.ConnectAsync(options, stoppingToken);
+                await mqttClient.SubscribeAsync("hendrix/scans/#", cancellationToken: stoppingToken);
+                _logger.LogInformation("MQTT lytter på hendrix/scans/#");
+            }
+            catch
+            {
+                _logger.LogWarning("Kunne ikke forbinde til MQTT ved opstart. Prøver igen om 5 sekunder...");
+                await Task.Delay(TimeSpan.FromSeconds(5), stoppingToken);
+            }
+        }
 
         // Bliv ved med at køre indtil applikationen stoppes
         await Task.Delay(Timeout.Infinite, stoppingToken);

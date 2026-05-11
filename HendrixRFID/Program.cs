@@ -18,10 +18,12 @@ builder.Services.AddSingleton(channel);
 builder.Services.AddSingleton<EartagDecoder>();
 builder.Services.AddScoped<PigService>();
 builder.Services.AddScoped<PigLocationService>();
+builder.Services.AddScoped<LocationDecisionService>();
 
 // Background services
 builder.Services.AddHostedService<MqttListenerService>();
 builder.Services.AddHostedService<ScanProcessorService>();
+builder.Services.AddHostedService<JobService>();
 
 // REST API
 builder.Services.AddControllers();

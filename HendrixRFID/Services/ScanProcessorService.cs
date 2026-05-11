@@ -24,6 +24,8 @@ public class ScanProcessorService : BackgroundService
             var decoder  = scope.ServiceProvider.GetRequiredService<EartagDecoder>();
             var pigLocationService = scope.ServiceProvider.GetRequiredService<PigLocationService>();
 
+            var validScans = new List<(string pigId, int signalStrength)>();
+
             foreach (var tag in message.Tags)
             {
                 // Dekod EpcHex => PigId
@@ -34,7 +36,12 @@ public class ScanProcessorService : BackgroundService
                     continue;
                 }
 
-                await pigLocationService.ProcessScanAsync(pigId, message.LampId, tag.SignalStrength);
+                validScans.Add((pigId, tag.SignalStrength));
+            }
+
+            if (validScans.Any())
+            {
+                await pigLocationService.ProcessScansBatchAsync(message.LampId, validScans);
             }
 
             _logger.LogInformation("Behandlet {Count} tags fra {LampId}", message.Tags.Count, message.LampId);
