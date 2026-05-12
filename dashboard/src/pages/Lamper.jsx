@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { lampsData } from "../data/mockData";
+import { fetchLamps } from "../api";
 import { Lightbulb } from "lucide-react";
 import KpiCard from "../components/KpiCard";
 
@@ -8,10 +8,17 @@ export default function Lamper() {
   const [onlineCount, setOnlineCount] = useState(0);
 
   useEffect(() => {
-    // API Fetch mock
-    setLamps(lampsData);
-    const active = lampsData.filter(l => l.status === "Aktiv").length;
-    setOnlineCount(active);
+    const loadData = async () => {
+      try {
+        const data = await fetchLamps();
+        setLamps(data);
+        const active = data.filter(l => l.status === "Aktiv").length;
+        setOnlineCount(active);
+      } catch (error) {
+        console.error("Failed to fetch lamps:", error);
+      }
+    };
+    loadData();
   }, []);
 
   return (
