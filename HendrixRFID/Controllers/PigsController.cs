@@ -22,7 +22,7 @@ public class PigsController : ControllerBase
             .Include(pl => pl.Pig)
             .Select(pl => new {
                 id = pl.PigId,
-                status = "Aktiv",
+                status = pl.LastUpdated >= DateTime.UtcNow.AddHours(-36) ? "Aktiv" : "Inaktiv",
                 stald = $"Stald {pl.Pig.BelongsTo}",
                 location = pl.CurrentLampId,
                 lastMoved = pl.LastUpdated.ToString("yyyy-MM-dd HH:mm:ss")

@@ -21,7 +21,7 @@ public class LampsController : ControllerBase
         var lamps = await _db.Lamps
             .Select(l => new {
                 id = l.LampId,
-                status = "Aktiv",
+                status = l.LastSeen >= DateTime.UtcNow.AddMinutes(-2) ? "Aktiv" : "Inaktiv",
                 stald = $"Stald {l.PlacedIn}",
                 pigCount = _db.PigLocations.Count(pl => pl.CurrentLampId == l.LampId)
             })

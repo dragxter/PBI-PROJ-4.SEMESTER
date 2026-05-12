@@ -24,6 +24,9 @@ public class ScanProcessorService : BackgroundService
             var decoder  = scope.ServiceProvider.GetRequiredService<EartagDecoder>();
             var pigLocationService = scope.ServiceProvider.GetRequiredService<PigLocationService>();
 
+            // Altid opdater lampens heartbeat (også selvom Tags listen er tom)
+            await pigLocationService.UpdateLampHeartbeatAsync(message.LampId);
+
             var validScans = new List<(string pigId, int signalStrength)>();
 
             foreach (var tag in message.Tags)

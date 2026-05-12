@@ -22,6 +22,9 @@ namespace HendrixRFID.Migrations
                     b.Property<string>("LampId")
                         .HasColumnType("TEXT");
 
+                    b.Property<DateTime>("LastSeen")
+                        .HasColumnType("TEXT");
+
                     b.Property<int>("PlacedIn")
                         .HasColumnType("INTEGER");
 

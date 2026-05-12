@@ -16,6 +16,16 @@ public class PigLocationService
         _logger = logger;
     }
 
+    public async Task UpdateLampHeartbeatAsync(string lampId)
+    {
+        var lamp = await _db.Lamps.FindAsync(lampId);
+        if (lamp != null)
+        {
+            lamp.LastSeen = DateTime.UtcNow;
+            await _db.SaveChangesAsync();
+        }
+    }
+
     public async Task ProcessScansBatchAsync(string lampId, IEnumerable<(string pigId, int signalStrength)> scans)
     {
         // 1. Slå lampe op — vi skal bruge PlacedIn
@@ -40,7 +50,7 @@ public class PigLocationService
                 ScanTime       = DateTime.UtcNow
             });
 
-            // 4. Opret PigLocation kun hvis grisen er ny
+            // 4. Opret PigLocation kun hvis grisen er ny, ellers opdater tidspunktet for at vise at den er i live
             var location = await _db.PigLocations.FindAsync(scan.pigId);
             if (location is null)
             {
@@ -52,6 +62,10 @@ public class PigLocationService
                 });
 
                 _logger.LogInformation("Første scanning af {PigId} ved {LampId}", scan.pigId, lampId);
+            }
+            else
+            {
+                location.LastUpdated = DateTime.UtcNow;
             }
         }
 
