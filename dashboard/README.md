@@ -2,7 +2,7 @@
 
 Dette er frontend-applikationen til Hendrix Genetics RFID-projektet. Dashboardet er bygget med **React** og **Vite**, og det er designet til at give et visuelt overblik over grisens bevægelser, lampestatus og live-aktivitet via det tilhørende .NET-backend API.
 
-## Forudsætninger (Prerequisites)
+## Forudsætninger
 
 Før du kan køre dette projekt, skal du sikre dig, at du har følgende installeret:
 - [Node.js](https://nodejs.org/) (Version 18 eller nyere anbefales)
@@ -10,7 +10,7 @@ Før du kan køre dette projekt, skal du sikre dig, at du har følgende installe
 
 **Vigtigt:** For at dashboardet kan vise data, **skal backend-serveren køre** samtidig. Backend'en forventes at køre på `http://localhost:5167`.
 
-## 🛠️ Installation
+## Installation
 
 1. Åbn en terminal og naviger til `dashboard`-mappen.
 2. Kør følgende kommando for at installere alle nødvendige pakker:
@@ -18,7 +18,7 @@ Før du kan køre dette projekt, skal du sikre dig, at du har følgende installe
    npm install
    ```
 
-## 🚀 Kør applikationen lokalt (Development)
+## Kør applikationen lokalt
 
 For at starte udviklingsserveren og se dashboardet i din browser:
 
@@ -33,15 +33,6 @@ For at starte udviklingsserveren og se dashboardet i din browser:
    ```
 3. Åbn din browser og gå til URL'en angivet i terminalen (typisk `http://localhost:5173`).
 
-## 📦 Byg til produktion (Build)
-
-Når applikationen skal gøres klar til produktion (deployment):
-
-```bash
-npm run build
-```
-Dette vil generere optimerede filer i `dist`-mappen.
-
-## 🔗 API Forbindelse
+## API Forbindelse
 
 Dashboardet kommunikerer med .NET API'et for at hente data. Alle HTTP-forespørgsler er samlet i filen `src/api.js`. Hvis backenden ændrer port (f.eks. ved deployment), er det kun variablen `API_BASE_URL` i denne fil, der skal opdateres.
