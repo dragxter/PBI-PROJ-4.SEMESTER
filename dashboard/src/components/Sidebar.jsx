@@ -1,5 +1,5 @@
 import { NavLink } from "react-router-dom";
-import { LayoutDashboard, Warehouse, Lightbulb, PiggyBank, Database } from "lucide-react";
+import { LayoutDashboard, Warehouse, Lightbulb, PiggyBank } from "lucide-react";
 
 export default function Sidebar() {
   const navItems = [
@@ -7,7 +7,6 @@ export default function Sidebar() {
     { name: "Stalde", path: "/stalde", icon: Warehouse },
     { name: "Lamper", path: "/lamper", icon: Lightbulb },
     { name: "Grise", path: "/grise", icon: PiggyBank },
-    { name: "Rå Data (Log)", path: "/log", icon: Database },
   ];
 
   return (

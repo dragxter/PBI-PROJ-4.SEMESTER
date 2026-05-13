@@ -18,34 +18,60 @@ public class DashboardController : ControllerBase
     [HttpGet("kpi")]
     public async Task<IActionResult> GetKpi()
     {
-        var activePigs = await _db.PigLocations.Select(p => p.PigId).Distinct().CountAsync();
+        var activeCutoff = DateTime.UtcNow.AddHours(-36);
+        var activePigs = await _db.PigLocations
+            .Where(p => p.LastUpdated >= activeCutoff)
+            .Select(p => p.PigId)
+            .Distinct()
+            .CountAsync();
         var onlineLamps = await _db.PigLocations.Select(p => p.CurrentLampId).Distinct().CountAsync();
+
+        var uptime = DateTime.UtcNow - System.Diagnostics.Process.GetCurrentProcess().StartTime.ToUniversalTime();
+        var uptimeStr = uptime.TotalDays >= 1
+            ? $"{(int)uptime.TotalDays}d {uptime.Hours}t"
+            : uptime.TotalHours >= 1
+                ? $"{(int)uptime.TotalHours}t {uptime.Minutes}m"
+                : $"{uptime.Minutes}m";
         
         return Ok(new {
             activePigs = activePigs,
             onlineLamps = onlineLamps,
-            systemUptime = "99.9%"
+            systemUptime = uptimeStr
         });
     }
 
     [HttpGet("activity")]
     public async Task<IActionResult> GetActivity()
     {
-        var cutoff = DateTime.UtcNow.AddHours(-12);
-        var histories = await _db.PigHistories
-            .Where(h => h.MovedAt >= cutoff)
+        var now = DateTime.UtcNow;
+        var cutoff = now.AddHours(-24);
+
+        // RawScans is written every scan cycle — unlike PigHistories which only
+        // updates at 03:00, so this is the right source for a live activity chart.
+        var scans = await _db.RawScans
+            .Where(r => r.ScanTime >= cutoff)
             .ToListAsync();
 
-        var grouped = histories
-            .GroupBy(h => h.MovedAt.Hour)
-            .Select(g => new {
-                time = $"{g.Key:D2}:00",
-                activity = g.Count()
+        // Group by the full hour slot (year+month+day+hour) to avoid midnight-crossing bugs
+        var grouped = scans
+            .GroupBy(r => new DateTime(r.ScanTime.Year, r.ScanTime.Month, r.ScanTime.Day, r.ScanTime.Hour, 0, 0, DateTimeKind.Utc))
+            .ToDictionary(g => g.Key, g => g.Count());
+
+        // Build all 24 hour slots so the chart always has a full x-axis even during quiet periods
+        var anchorHour = new DateTime(now.Year, now.Month, now.Day, now.Hour, 0, 0, DateTimeKind.Utc);
+        var result = Enumerable.Range(-23, 24)
+            .Select(i =>
+            {
+                var slot = anchorHour.AddHours(i);
+                return new
+                {
+                    time = $"{slot.Hour:D2}:00",
+                    activity = grouped.TryGetValue(slot, out var count) ? count : 0
+                };
             })
-            .OrderBy(x => x.time)
             .ToList();
 
-        return Ok(grouped);
+        return Ok(result);
     }
 
     [HttpGet("live-status")]
