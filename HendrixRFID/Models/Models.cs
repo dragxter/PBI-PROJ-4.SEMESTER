@@ -33,6 +33,8 @@ public class Lamp
     // Hvilken bygning sidder lampen i?
     public int PlacedIn { get; set; }
     public Stable Stable { get; set; } = null!;
+
+    public DateTime LastSeen { get; set; } = DateTime.UtcNow;
 }
 
 /// <summary>

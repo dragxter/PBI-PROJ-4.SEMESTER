@@ -2,7 +2,7 @@ import { useState, useEffect } from "react";
 import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from "recharts";
 import { PiggyBank, Lightbulb, Activity } from "lucide-react";
 import KpiCard from "../components/KpiCard";
-import { kpiData, activityData, liveStatusData } from "../data/mockData";
+import { fetchKpi, fetchActivity, fetchLiveStatus } from "../api";
 
 export default function Dashboard() {
   const [kpis, setKpis] = useState({ activePigs: 0, onlineLamps: 0, systemUptime: "0%" });
@@ -10,11 +10,21 @@ export default function Dashboard() {
   const [liveData, setLiveData] = useState([]);
 
   useEffect(() => {
-    // Simulering af et API fetch kald
-    // Her kan du senere indsætte: fetch('https://dit-dotnet-api.com/api/dashboard')...
-    setKpis(kpiData);
-    setChartData(activityData);
-    setLiveData(liveStatusData);
+    const loadData = async () => {
+      try {
+        const kpiData = await fetchKpi();
+        setKpis(kpiData);
+
+        const activityData = await fetchActivity();
+        setChartData(activityData);
+
+        const statusData = await fetchLiveStatus();
+        setLiveData(statusData);
+      } catch (error) {
+        console.error("Failed to load dashboard data:", error);
+      }
+    };
+    loadData();
   }, []);
 
   return (

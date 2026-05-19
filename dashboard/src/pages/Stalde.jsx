@@ -1,30 +1,44 @@
 import { useState, useEffect } from "react";
-import { staldData, lampsData, pigsData } from "../data/mockData";
+import { fetchStables, fetchLamps, fetchPigs } from "../api";
 import { Warehouse, Lightbulb, PiggyBank } from "lucide-react";
 
 export default function Stalde() {
   const [stalde, setStalde] = useState([]);
   const [selectedStald, setSelectedStald] = useState(null);
+  const [allLamps, setAllLamps] = useState([]);
+  const [allPigs, setAllPigs] = useState([]);
   const [lamps, setLamps] = useState([]);
   const [pigs, setPigs] = useState([]);
 
   useEffect(() => {
-    // API Fetch mock for stalde
-    setStalde(staldData);
-    if (staldData.length > 0) {
-      setSelectedStald(staldData[0]);
-    }
+    const loadData = async () => {
+      try {
+        const stablesData = await fetchStables();
+        setStalde(stablesData);
+        if (stablesData.length > 0) {
+          setSelectedStald(stablesData[0]);
+        }
+        
+        const lampsData = await fetchLamps();
+        setAllLamps(lampsData);
+        
+        const pigsData = await fetchPigs();
+        setAllPigs(pigsData);
+      } catch (error) {
+        console.error("Failed to fetch stalde data:", error);
+      }
+    };
+    loadData();
   }, []);
 
   useEffect(() => {
     if (selectedStald) {
-      // API Fetch mock for details of selected stald
-      const filteredLamps = lampsData.filter(l => l.stald === selectedStald.name);
-      const filteredPigs = pigsData.filter(p => p.stald === selectedStald.name);
+      const filteredLamps = allLamps.filter(l => l.stald === selectedStald.name);
+      const filteredPigs = allPigs.filter(p => p.stald === selectedStald.name);
       setLamps(filteredLamps);
       setPigs(filteredPigs);
     }
-  }, [selectedStald]);
+  }, [selectedStald, allLamps, allPigs]);
 
   return (
     <div className="space-y-6">

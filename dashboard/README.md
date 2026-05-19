@@ -1,16 +1,38 @@
-# React + Vite
+# Hendrix Genetics RFID Dashboard
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+Dette er frontend-applikationen til Hendrix Genetics RFID-projektet. Dashboardet er bygget med **React** og **Vite**, og det er designet til at give et visuelt overblik over grisens bevægelser, lampestatus og live-aktivitet via det tilhørende .NET-backend API.
 
-Currently, two official plugins are available:
+## Forudsætninger
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Oxc](https://oxc.rs)
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/)
+Før du kan køre dette projekt, skal du sikre dig, at du har følgende installeret:
+- [Node.js](https://nodejs.org/) (Version 18 eller nyere anbefales)
+- `.NET 9 SDK` (Til at køre backend-API'et)
 
-## React Compiler
+**Vigtigt:** For at dashboardet kan vise data, **skal backend-serveren køre** samtidig. Backend'en forventes at køre på `http://localhost:5167`.
 
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
+## Installation
 
-## Expanding the ESLint configuration
+1. Åbn en terminal og naviger til `dashboard`-mappen.
+2. Kør følgende kommando for at installere alle nødvendige pakker:
+   ```bash
+   npm install
+   ```
 
-If you are developing a production application, we recommend using TypeScript with type-aware lint rules enabled. Check out the [TS template](https://github.com/vitejs/vite/tree/main/packages/create-vite/template-react-ts) for information on how to integrate TypeScript and [`typescript-eslint`](https://typescript-eslint.io) in your project.
+## Kør applikationen lokalt
+
+For at starte udviklingsserveren og se dashboardet i din browser:
+
+1. Start først backend-API'et (i projektets rodmappe):
+   ```bash
+   cd HendrixRFID
+   dotnet run
+   ```
+2. Start frontend-dashboardet (i en ny terminal i `dashboard`-mappen):
+   ```bash
+   npm run dev
+   ```
+3. Åbn din browser og gå til URL'en angivet i terminalen (typisk `http://localhost:5173`).
+
+## API Forbindelse
+
+Dashboardet kommunikerer med .NET API'et for at hente data. Alle HTTP-forespørgsler er samlet i filen `src/api.js`. Hvis backenden ændrer port (f.eks. ved deployment), er det kun variablen `API_BASE_URL` i denne fil, der skal opdateres.
